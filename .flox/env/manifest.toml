@@ -1,0 +1,14 @@
+version = 1
+
+[include]
+environments = [
+  { remote = "zmitchell/rust-build" },
+  { remote = "zmitchell/rust-dev" },
+  { remote = "zmitchell/rust-test" },
+]
+
+[options]
+cuda-detection = false
+
+[install]
+python3.pkg-path = "python3"
