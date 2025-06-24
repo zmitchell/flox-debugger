@@ -1,0 +1,125 @@
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
+
+pub trait DisplayKeyBindings {
+    /// Returns an iterator over (keys, description) pairs
+    /// for each keybinding.
+    fn displayable(&self) -> Vec<(String, &'static str)>;
+}
+
+pub trait DisplayKeyCombo {
+    /// Returns a user-facing representation of a key combination.
+    fn display_key_combo(&self) -> String;
+}
+
+impl DisplayKeyCombo for KeyEvent {
+    fn display_key_combo(&self) -> String {
+        let mut parts = vec![];
+        if self.modifiers.contains(KeyModifiers::SHIFT) {
+            parts.push("⇧".to_string());
+        }
+        if self.modifiers.contains(KeyModifiers::CONTROL) {
+            parts.push("Ctrl".to_string());
+        }
+        if self.modifiers.contains(KeyModifiers::ALT) {
+            parts.push("Alt".to_string());
+        }
+        if self.modifiers.contains(KeyModifiers::SUPER) {
+            parts.push("Super".to_string());
+        }
+        let key = match self.code {
+            KeyCode::Backspace => "Backspace".to_string(),
+            KeyCode::Enter => "Enter".to_string(),
+            KeyCode::Left => "←".to_string(),
+            KeyCode::Right => "→".to_string(),
+            KeyCode::Up => "↑".to_string(),
+            KeyCode::Down => "↓".to_string(),
+            KeyCode::Home => "Home".to_string(),
+            KeyCode::End => "End".to_string(),
+            KeyCode::PageUp => "PgUp".to_string(),
+            KeyCode::PageDown => "PgDown".to_string(),
+            KeyCode::Tab => "Tab".to_string(),
+            KeyCode::BackTab => "⇧+Tab".to_string(),
+            KeyCode::Delete => "Del".to_string(),
+            KeyCode::F(n) => format!("F{n}"),
+            KeyCode::Char(c) => format!("{}", c.to_uppercase()),
+            KeyCode::Esc => "Esc".to_string(),
+            _ => "".to_string(),
+        };
+        parts.push(key);
+        parts.join("+")
+    }
+}
+
+/// The complete set of configured key bindings for the application.
+#[derive(Debug, Clone, Default)]
+pub struct KeyBindings {
+    /// The key bindings available at all times.
+    global: GlobalKeyBindings,
+    home: HomeKeyBindings,
+}
+
+impl KeyBindings {
+    /// Returns the configured global key bindings.
+    pub fn global(&self) -> GlobalKeyBindings {
+        self.global.clone()
+    }
+
+    /// Returns the configured key bindings for the home screen.
+    pub fn home(&self) -> HomeKeyBindings {
+        self.home.clone()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GlobalKeyBindings {
+    exit: KeyEvent,
+    next_tab: KeyEvent,
+    prev_tab: KeyEvent,
+}
+
+impl Default for GlobalKeyBindings {
+    fn default() -> Self {
+        let exit = KeyEvent {
+            code: KeyCode::Char('q'),
+            modifiers: KeyModifiers::CONTROL,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let next_tab = KeyEvent {
+            code: KeyCode::Tab,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let prev_tab = KeyEvent {
+            code: KeyCode::BackTab,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        Self {
+            exit,
+            next_tab,
+            prev_tab,
+        }
+    }
+}
+
+impl DisplayKeyBindings for GlobalKeyBindings {
+    fn displayable(&self) -> Vec<(String, &'static str)> {
+        vec![
+            (self.exit.display_key_combo(), "Exit"),
+            (self.next_tab.display_key_combo(), "Next"),
+            (self.prev_tab.display_key_combo(), "Prev"),
+        ]
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct HomeKeyBindings {}
+
+impl DisplayKeyBindings for HomeKeyBindings {
+    fn displayable(&self) -> Vec<(String, &'static str)> {
+        vec![]
+    }
+}

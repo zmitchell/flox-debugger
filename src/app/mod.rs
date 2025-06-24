@@ -1,13 +1,18 @@
+pub mod key_bindings;
+pub mod theme;
 use std::{collections::HashMap, io::Write};
 
 use anyhow::{Context, Error};
 use ratatui::{
     Terminal,
-    crossterm::event::{self, Event, KeyCode, KeyEventKind},
+    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind},
     prelude::*,
 };
 
-use crate::ui::draw_ui;
+use crate::{
+    app::{key_bindings::KeyBindings, theme::Theme},
+    ui::draw_ui,
+};
 
 #[derive(Debug)]
 pub struct App {
@@ -15,6 +20,8 @@ pub struct App {
     cmds: Vec<Cmd>,
     screen: Screen,
     shell: Shell,
+    theme: Theme,
+    key_bindings: KeyBindings,
 }
 
 impl App {
@@ -23,8 +30,10 @@ impl App {
         Self {
             env,
             cmds: Vec::new(),
-            screen: Screen::Vars,
+            screen: Screen::Home,
             shell: Shell::Fish,
+            theme: Theme::default(),
+            key_bindings: KeyBindings::default(),
         }
     }
 
@@ -71,6 +80,21 @@ impl App {
             .context("failed to write commands to buffer")?;
         Ok(())
     }
+
+    /// Returns the current screen.
+    pub fn screen(&self) -> Screen {
+        self.screen.clone()
+    }
+
+    /// Returns the configured theme.
+    pub fn theme(&self) -> Theme {
+        self.theme.clone()
+    }
+
+    /// Returns the configured key bindings.
+    pub fn key_bindings(&self) -> KeyBindings {
+        self.key_bindings.clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -80,6 +104,20 @@ pub enum Screen {
     Vars,
     Trace,
     Output,
+}
+
+impl Screen {
+    /// Returns the index of the current tab to determine which tab
+    /// to highlight in the UI.
+    pub fn tab_index(&self) -> usize {
+        match self {
+            Screen::Home => 0,
+            Screen::Prompt => 1,
+            Screen::Vars => 2,
+            Screen::Trace => 3,
+            Screen::Output => 4,
+        }
+    }
 }
 
 impl std::fmt::Display for Screen {
