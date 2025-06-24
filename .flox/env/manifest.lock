@@ -7,6 +7,9 @@
         "pkg-path": "bacon",
         "pkg-group": "extra"
       },
+      "binsider": {
+        "pkg-path": "binsider"
+      },
       "cargo": {
         "pkg-path": "cargo"
       },
@@ -766,6 +769,122 @@
       "priority": 5
     },
     {
+      "attr_path": "binsider",
+      "broken": false,
+      "derivation": "/nix/store/2jc1110d40ihcb0wy5s26v76dyaqd7jv-binsider-0.2.1.drv",
+      "description": "Analyzer of executables using a terminal user interface",
+      "install_id": "binsider",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "binsider-0.2.1",
+      "pname": "binsider",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:36:15.550784Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/dbmz2x7n3k6mw2p7y6mcwk3rlml1di4w-binsider-0.2.1"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "binsider",
+      "broken": false,
+      "derivation": "/nix/store/kba80df3akjc8iz1nmwv8hllvw2nq866-binsider-0.2.1.drv",
+      "description": "Analyzer of executables using a terminal user interface",
+      "install_id": "binsider",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "binsider-0.2.1",
+      "pname": "binsider",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T00:54:48.008527Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/2pm4mdj9cfz0c2yj476kcx0k8l69lpxb-binsider-0.2.1"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "binsider",
+      "broken": false,
+      "derivation": "/nix/store/6ln3pdiw4wy35g5gh7jqwcizbnx487qg-binsider-0.2.1.drv",
+      "description": "Analyzer of executables using a terminal user interface",
+      "install_id": "binsider",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "binsider-0.2.1",
+      "pname": "binsider",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:12:22.813222Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/4j23g4g37ahn2j1x2n56bm0fa8qxwynn-binsider-0.2.1"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "binsider",
+      "broken": false,
+      "derivation": "/nix/store/fyr1b2livpvhgbk9b2s07837hm7sap2a-binsider-0.2.1.drv",
+      "description": "Analyzer of executables using a terminal user interface",
+      "install_id": "binsider",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "name": "binsider-0.2.1",
+      "pname": "binsider",
+      "rev": "9e83b64f727c88a7711a2c463a7b16eedb69a84c",
+      "rev_count": 816272,
+      "rev_date": "2025-06-17T04:31:58Z",
+      "scrape_date": "2025-06-18T01:32:27.404319Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "0.2.1",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/bbxl693i0srr1f3ff215d2k0gw59vkq3-binsider-0.2.1"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
       "attr_path": "cargo",
       "broken": false,
       "derivation": "/nix/store/asxfmqp19s6dixk9ys27ffdpzfnacv9f-cargo-1.86.0.drv",
@@ -1442,6 +1561,9 @@
     "composer": {
       "version": 1,
       "install": {
+        "binsider": {
+          "pkg-path": "binsider"
+        },
         "python3": {
           "pkg-path": "python3"
         }

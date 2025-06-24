@@ -12,3 +12,4 @@ cuda-detection = false
 
 [install]
 python3.pkg-path = "python3"
+binsider.pkg-path = "binsider"

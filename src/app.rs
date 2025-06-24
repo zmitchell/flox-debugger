@@ -75,10 +75,23 @@ impl App {
 
 #[derive(Debug, Clone)]
 pub enum Screen {
+    Home,
     Prompt,
     Vars,
     Trace,
     Output,
+}
+
+impl std::fmt::Display for Screen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Screen::Home => write!(f, "Home"),
+            Screen::Prompt => write!(f, "Prompt"),
+            Screen::Vars => write!(f, "Vars"),
+            Screen::Trace => write!(f, "Trace"),
+            Screen::Output => write!(f, "Output"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
