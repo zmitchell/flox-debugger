@@ -5,7 +5,7 @@ use std::{collections::HashMap, io::Write};
 use anyhow::{Context, Error};
 use ratatui::{
     Terminal,
-    crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind},
+    crossterm::event::{self, Event, KeyCode, KeyEventKind},
     prelude::*,
 };
 
