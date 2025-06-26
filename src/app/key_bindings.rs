@@ -1,4 +1,8 @@
+use std::collections::HashMap;
+
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
+
+use crate::app::{AppEvent, Event, ExitState, Screen};
 
 pub trait DisplayKeyBindings {
     /// Returns an iterator over (keys, description) pairs
@@ -67,6 +71,37 @@ impl KeyBindings {
     /// Returns the configured key bindings for the home screen.
     pub fn home(&self) -> HomeKeyBindings {
         self.home.clone()
+    }
+
+    /// Returns a mapping from keycode to application event given the
+    /// current screen.
+    pub fn current_keymap(
+        &self,
+        screen: &Screen,
+        exit_state: &ExitState,
+    ) -> HashMap<KeyEvent, Event> {
+        let mut keymap = HashMap::new();
+        if let ExitState::PresentModal { highlighted_option } = exit_state {
+            todo!()
+        }
+        let GlobalKeyBindings {
+            exit,
+            next_tab,
+            prev_tab,
+        } = self.global;
+        let existing = keymap.insert(exit, Event::App(AppEvent::ExitRequested));
+        debug_assert!(existing.is_none());
+        let existing = keymap.insert(next_tab, Event::App(AppEvent::NextTab));
+        debug_assert!(existing.is_none());
+        let existing = keymap.insert(prev_tab, Event::App(AppEvent::PrevTab));
+        debug_assert!(existing.is_none());
+        match screen {
+            Screen::Home => {
+                let HomeKeyBindings {} = self.home;
+            }
+            _ => {}
+        }
+        keymap
     }
 }
 

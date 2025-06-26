@@ -4,12 +4,12 @@ use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Styled, Stylize},
-    text::{Line, Span},
-    widgets::{Block, Tabs},
+    text::{Line, Span, Text},
+    widgets::{Block, Clear, Tabs},
 };
 
 use crate::{
-    app::{App, Screen, key_bindings::DisplayKeyBindings},
+    app::{App, ExitOption, ExitState, Screen, key_bindings::DisplayKeyBindings},
     ui::home::render_home_screen,
 };
 
@@ -31,6 +31,9 @@ pub fn draw_ui(app: &mut App, frame: &mut Frame) {
     match app.screen() {
         Screen::Home => render_home_screen(app, frame, body_area),
         _ => unreachable!(),
+    }
+    if matches!(app.exit_state(), ExitState::PresentModal { .. }) {
+        // Draw the popup
     }
 }
 
@@ -98,4 +101,58 @@ fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
         .areas(area);
     frame.render_widget(Block::bordered(), area);
     frame.render_widget(line, line_area);
+}
+
+fn render_exit_modal(app: &App, frame: &mut Frame) {
+    let area = frame.area();
+    let ExitState::PresentModal { highlighted_option } = app.exit_state() else {
+        panic!("tried to draw exit modal in wrong state");
+    };
+    let theme = app.theme();
+
+    // First clear the entire screen
+    frame.render_widget(Clear, area);
+
+    // Now create a layout to place the popup inside of
+    let [_, vertical_area, _] = Layout::vertical([
+        Constraint::Percentage(100),
+        Constraint::Min(5),
+        Constraint::Percentage(100),
+    ])
+    .areas(area);
+    let [_, popup_area, _] = Layout::horizontal([
+        Constraint::Percentage(100),
+        Constraint::Min(10),
+        Constraint::Percentage(100),
+    ])
+    .areas(vertical_area);
+
+    // Draw the popup border
+    frame.render_widget(Block::bordered(), popup_area);
+
+    // Create the internal layout of the popup
+    let [desc_area, buttons_area] =
+        Layout::vertical([Constraint::Length(1), Constraint::Length(3)])
+            .margin(1)
+            .spacing(1)
+            .areas(popup_area);
+
+    let desc = Line::from("Exit?").alignment(Alignment::Center);
+    frame.render_widget(desc, desc_area);
+
+    let [ok_area, cancel_area] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)])
+        .margin(3)
+        .spacing(2)
+        .areas(buttons_area);
+    let (ok_style, cancel_style) = if highlighted_option == ExitOption::Ok {
+        (theme.selected_option, theme.fg)
+    } else {
+        (theme.fg, theme.selected_option)
+    };
+
+    let ok_button = Line::from("[ Ok ]".set_style(ok_style)).alignment(Alignment::Center);
+    let cancel_button =
+        Line::from("[ Cancel ]".set_style(cancel_style)).alignment(Alignment::Center);
+    frame.render_widget(ok_button, ok_area);
+    frame.render_widget(cancel_button, cancel_area);
 }
