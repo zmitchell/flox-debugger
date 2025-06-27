@@ -102,6 +102,16 @@ impl App {
     pub fn exit_state(&self) -> ExitState {
         self.exit_state.clone()
     }
+
+    /// Get a mutable reference to the exit state
+    pub fn exit_state_mut(&mut self) -> &mut ExitState {
+        &mut self.exit_state
+    }
+
+    /// Set the exit state
+    pub fn set_exit_state(&mut self, state: ExitState) {
+        self.exit_state = state;
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -111,7 +121,6 @@ pub enum ExitState {
     PresentModal {
         highlighted_option: ExitOption,
     },
-    Exit,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -178,9 +187,20 @@ enum Cmd {
     Unset { name: String },
 }
 
+/// Navigation directions for UI elements
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NavEvent {
+    Up,
+    Down,
+    Left,
+    Right,
+    Select, // For Enter key
+}
+
 #[derive(Debug, Clone)]
 pub enum Event {
     App(AppEvent),
+    Nav(NavEvent), // Add this new variant
 }
 
 #[derive(Debug, Clone)]
@@ -191,12 +211,6 @@ pub enum AppEvent {
     PrevTab,
     /// The user requested that the application exit.
     ExitRequested,
-    /// The user cancelled the exit operation.
-    ExitCancelled,
-    /// The user confirmed the exit operation.
-    ExitConfirmed,
-    /// Exit the application.
-    Exit,
 }
 
 pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> Result<(), Error> {
@@ -227,13 +241,40 @@ fn handle_event(app: &mut App, event: &Event) -> bool {
     match event {
         Event::App(app_event) => match app_event {
             AppEvent::ExitRequested => {
-                app.exit_state = ExitState::PresentModal {
-                    highlighted_option: ExitOption::default(),
-                };
-                return false;
+                app.set_exit_state(ExitState::PresentModal {
+                    highlighted_option: ExitOption::Cancel,
+                });
+                false
             }
-            _ => {}
+            _ => false,
         },
+        Event::Nav(nav_event) => {
+            // Handle navigation only when modal is present
+            if let ExitState::PresentModal { highlighted_option } = app.exit_state_mut() {
+                match nav_event {
+                    NavEvent::Left | NavEvent::Right => {
+                        // Toggle between Ok and Cancel
+                        *highlighted_option = match highlighted_option {
+                            ExitOption::Ok => ExitOption::Cancel,
+                            ExitOption::Cancel => ExitOption::Ok,
+                        };
+                    }
+                    // Ignore up/down events in the exit modal
+                    NavEvent::Up | NavEvent::Down => {}
+                    NavEvent::Select => {
+                        match highlighted_option {
+                            ExitOption::Ok => {
+                                app.set_exit_state(ExitState::NotExiting);
+                                return true; // Signal to exit the application
+                            }
+                            ExitOption::Cancel => {
+                                app.set_exit_state(ExitState::NotExiting);
+                            }
+                        }
+                    }
+                }
+            }
+            false
+        }
     }
-    return false;
 }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
 
-use crate::app::{AppEvent, Event, ExitState, Screen};
+use crate::app::{AppEvent, Event, ExitState, NavEvent, Screen};
 
 pub trait DisplayKeyBindings {
     /// Returns an iterator over (keys, description) pairs
@@ -81,9 +81,43 @@ impl KeyBindings {
         exit_state: &ExitState,
     ) -> HashMap<KeyEvent, Event> {
         let mut keymap = HashMap::new();
-        if let ExitState::PresentModal { highlighted_option } = exit_state {
-            todo!()
+
+        // Handle modal-specific bindings
+        if let ExitState::PresentModal { .. } = exit_state {
+            // When modal is presented, only add navigation keys (no global keys)
+            let left_arrow = KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            };
+            let existing = keymap.insert(left_arrow, Event::Nav(NavEvent::Left));
+            debug_assert!(existing.is_none());
+
+            let right_arrow = KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            };
+            let existing = keymap.insert(right_arrow, Event::Nav(NavEvent::Right));
+            debug_assert!(existing.is_none());
+
+            // Add Enter key for selection
+            let enter = KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                kind: KeyEventKind::Press,
+                state: KeyEventState::NONE,
+            };
+            let existing = keymap.insert(enter, Event::Nav(NavEvent::Select));
+            debug_assert!(existing.is_none());
+
+            // Return early, no other keys should work when modal is shown
+            return keymap;
         }
+
+        // Global keybindings (only when modal is not shown)
         let GlobalKeyBindings {
             exit,
             next_tab,
@@ -95,6 +129,7 @@ impl KeyBindings {
         debug_assert!(existing.is_none());
         let existing = keymap.insert(prev_tab, Event::App(AppEvent::PrevTab));
         debug_assert!(existing.is_none());
+
         match screen {
             Screen::Home => {
                 let HomeKeyBindings {} = self.home;
@@ -116,7 +151,8 @@ impl Default for GlobalKeyBindings {
     fn default() -> Self {
         let exit = KeyEvent {
             code: KeyCode::Char('q'),
-            modifiers: KeyModifiers::CONTROL,
+            // modifiers: KeyModifiers::CONTROL,
+            modifiers: KeyModifiers::NONE,
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         };
