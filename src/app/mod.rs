@@ -117,6 +117,11 @@ impl App {
     pub fn set_exit_state(&mut self, state: ExitState) {
         self.exit_state = state;
     }
+
+    /// Switches to the next tab
+    pub fn next_tab(&mut self) {
+        self.screen = self.screen.next_tab()
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -154,6 +159,30 @@ impl Screen {
             Screen::Vars => 2,
             Screen::Trace => 3,
             Screen::Output => 4,
+        }
+    }
+
+    /// Returns the next tab
+    pub fn next_tab(&self) -> Self {
+        use Screen::*;
+        match self {
+            Home => Prompt,
+            Prompt => Vars,
+            Vars => Trace,
+            Trace => Output,
+            Output => Home,
+        }
+    }
+
+    /// Returns the previous tab
+    pub fn prev_tab(&self) -> Self {
+        use Screen::*;
+        match self {
+            Home => Output,
+            Prompt => Home,
+            Vars => Prompt,
+            Trace => Vars,
+            Output => Trace,
         }
     }
 }
@@ -212,8 +241,6 @@ pub enum Event {
 pub enum AppEvent {
     /// The user requested that the next tab be displayed.
     NextTab,
-    /// The user requested that the previous tab be displayed.
-    PrevTab,
     /// The user requested that the application exit.
     ExitRequested,
 }
@@ -253,12 +280,14 @@ fn handle_event(app: &mut App, event: &Event) -> bool {
                 app.set_exit_state(ExitState::PresentModal {
                     highlighted_option: ExitOption::Cancel,
                 });
-                false
             }
-            _ => false,
+            AppEvent::NextTab => {
+                app.next_tab();
+            }
         },
-        _ => false,
+        Event::Nav(_) => {}
     }
+    false
 }
 
 /// Handles events when the user is being presented the exit modal.

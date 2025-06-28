@@ -60,6 +60,10 @@ pub struct KeyBindings {
     /// The key bindings available at all times.
     global: GlobalKeyBindings,
     home: HomeKeyBindings,
+    prompt: PromptKeyBindings,
+    vars: VarsKeyBindings,
+    trace: TraceKeyBindings,
+    output: OutputKeyBindings,
 }
 
 impl KeyBindings {
@@ -71,6 +75,26 @@ impl KeyBindings {
     /// Returns the configured key bindings for the home screen.
     pub fn home(&self) -> HomeKeyBindings {
         self.home.clone()
+    }
+
+    /// Returns the configured key bindings for the prompt screen.
+    pub fn prompt(&self) -> PromptKeyBindings {
+        self.prompt.clone()
+    }
+
+    /// Returns the configured key bindings for the vars screen.
+    pub fn vars(&self) -> VarsKeyBindings {
+        self.vars.clone()
+    }
+
+    /// Returns the configured key bindings for the trace screen.
+    pub fn trace(&self) -> TraceKeyBindings {
+        self.trace.clone()
+    }
+
+    /// Returns the configured key bindings for the output screen.
+    pub fn output(&self) -> OutputKeyBindings {
+        self.output.clone()
     }
 
     /// Returns a mapping from keycode to application event given the
@@ -130,12 +154,14 @@ impl KeyBindings {
         let existing = keymap.insert(prev_tab, Event::App(AppEvent::PrevTab));
         debug_assert!(existing.is_none());
 
-        match screen {
-            Screen::Home => {
-                let HomeKeyBindings {} = self.home;
-            }
-            _ => {}
-        }
+        // Match on the screen and apply screen-specific keybindings once
+        // we have them
+        // match screen {
+        //     Screen::Home => {
+        //         let HomeKeyBindings {} = self.home;
+        //     }
+        //     _ => {}
+        // }
         keymap
     }
 }
@@ -144,7 +170,6 @@ impl KeyBindings {
 pub struct GlobalKeyBindings {
     exit: KeyEvent,
     next_tab: KeyEvent,
-    prev_tab: KeyEvent,
 }
 
 impl Default for GlobalKeyBindings {
@@ -162,12 +187,13 @@ impl Default for GlobalKeyBindings {
             kind: KeyEventKind::Press,
             state: KeyEventState::NONE,
         };
-        let prev_tab = KeyEvent {
-            code: KeyCode::BackTab,
-            modifiers: KeyModifiers::NONE,
-            kind: KeyEventKind::Press,
-            state: KeyEventState::NONE,
-        };
+        // FIXME: this doesn't work for some reason, haven't looked into why
+        // let prev_tab = KeyEvent {
+        //     code: KeyCode::Tab,
+        //     modifiers: KeyModifiers::SHIFT,
+        //     kind: KeyEventKind::Press,
+        //     state: KeyEventState::NONE,
+        // };
         Self {
             exit,
             next_tab,
@@ -190,6 +216,42 @@ impl DisplayKeyBindings for GlobalKeyBindings {
 pub struct HomeKeyBindings {}
 
 impl DisplayKeyBindings for HomeKeyBindings {
+    fn displayable(&self) -> Vec<(String, &'static str)> {
+        vec![]
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct PromptKeyBindings {}
+
+impl DisplayKeyBindings for PromptKeyBindings {
+    fn displayable(&self) -> Vec<(String, &'static str)> {
+        vec![]
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct VarsKeyBindings {}
+
+impl DisplayKeyBindings for VarsKeyBindings {
+    fn displayable(&self) -> Vec<(String, &'static str)> {
+        vec![]
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct TraceKeyBindings {}
+
+impl DisplayKeyBindings for TraceKeyBindings {
+    fn displayable(&self) -> Vec<(String, &'static str)> {
+        vec![]
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct OutputKeyBindings {}
+
+impl DisplayKeyBindings for OutputKeyBindings {
     fn displayable(&self) -> Vec<(String, &'static str)> {
         vec![]
     }

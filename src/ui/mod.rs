@@ -30,7 +30,10 @@ pub fn draw_ui(app: &mut App, frame: &mut Frame) {
     render_footer(app, frame, footer_area);
     match app.screen() {
         Screen::Home => render_home_screen(app, frame, body_area),
-        _ => unreachable!(),
+        Screen::Prompt => render_dummy_screen("Prompt Screen", frame, body_area),
+        Screen::Vars => render_dummy_screen("Vars Screen", frame, body_area),
+        Screen::Trace => render_dummy_screen("Trace Screen", frame, body_area),
+        Screen::Output => render_dummy_screen("Output Screen", frame, body_area),
     }
     if matches!(app.exit_state(), ExitState::PresentModal { .. }) {
         render_exit_modal(app, frame);
@@ -73,7 +76,10 @@ fn render_header(app: &App, frame: &mut Frame, area: Rect) {
 fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
     let screen_bindings = match app.screen() {
         Screen::Home => app.key_bindings().home().displayable(),
-        _ => unreachable!(),
+        Screen::Prompt => app.key_bindings().prompt().displayable(),
+        Screen::Vars => app.key_bindings().vars().displayable(),
+        Screen::Trace => app.key_bindings().trace().displayable(),
+        Screen::Output => app.key_bindings().output().displayable(),
     };
     let applicable_bindings = {
         let mut bindings = app.key_bindings().global().displayable();
@@ -84,7 +90,6 @@ fn render_footer(app: &App, frame: &mut Frame, area: Rect) {
     let mut formatted_bindings = applicable_bindings
         .into_iter()
         .flat_map(|(keys, desc)| {
-            // foo
             vec![
                 " [".set_style(theme.fg_dim),
                 keys.set_style(theme.flox_purple),
@@ -153,4 +158,8 @@ fn render_exit_modal(app: &App, frame: &mut Frame) {
 
     frame.render_widget(ok_button, ok_area);
     frame.render_widget(cancel_button, cancel_area);
+}
+
+fn render_dummy_screen(name: &str, frame: &mut Frame, area: Rect) {
+    frame.render_widget(Line::from(name).alignment(Alignment::Center), area);
 }
