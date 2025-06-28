@@ -103,6 +103,11 @@ impl App {
         self.exit_state.clone()
     }
 
+    /// Returns true if the application is presenting the exit modal.
+    pub fn is_displaying_exit_modal(&self) -> bool {
+        matches!(self.exit_state, ExitState::PresentModal { .. })
+    }
+
     /// Get a mutable reference to the exit state
     pub fn exit_state_mut(&mut self) -> &mut ExitState {
         &mut self.exit_state
@@ -238,6 +243,10 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> Result<
 /// Modifies the application state in response to an event, returning a boolean
 /// indicating whether the application should exit.
 fn handle_event(app: &mut App, event: &Event) -> bool {
+    if app.is_displaying_exit_modal() {
+        let should_exit = handle_exit_state(app, event);
+        return should_exit;
+    }
     match event {
         Event::App(app_event) => match app_event {
             AppEvent::ExitRequested => {
@@ -248,33 +257,37 @@ fn handle_event(app: &mut App, event: &Event) -> bool {
             }
             _ => false,
         },
-        Event::Nav(nav_event) => {
-            // Handle navigation only when modal is present
-            if let ExitState::PresentModal { highlighted_option } = app.exit_state_mut() {
-                match nav_event {
-                    NavEvent::Left | NavEvent::Right => {
-                        // Toggle between Ok and Cancel
-                        *highlighted_option = match highlighted_option {
-                            ExitOption::Ok => ExitOption::Cancel,
-                            ExitOption::Cancel => ExitOption::Ok,
-                        };
-                    }
-                    // Ignore up/down events in the exit modal
-                    NavEvent::Up | NavEvent::Down => {}
-                    NavEvent::Select => {
-                        match highlighted_option {
-                            ExitOption::Ok => {
-                                app.set_exit_state(ExitState::NotExiting);
-                                return true; // Signal to exit the application
-                            }
-                            ExitOption::Cancel => {
-                                app.set_exit_state(ExitState::NotExiting);
-                            }
+        _ => false,
+    }
+}
+
+/// Handles events when the user is being presented the exit modal.
+fn handle_exit_state(app: &mut App, event: &Event) -> bool {
+    if let ExitState::PresentModal { highlighted_option } = app.exit_state_mut() {
+        if let Event::Nav(nav_event) = event {
+            match nav_event {
+                NavEvent::Left | NavEvent::Right => {
+                    // Toggle between Ok and Cancel
+                    *highlighted_option = match highlighted_option {
+                        ExitOption::Ok => ExitOption::Cancel,
+                        ExitOption::Cancel => ExitOption::Ok,
+                    };
+                }
+                // Ignore up/down events in the exit modal
+                NavEvent::Up | NavEvent::Down => {}
+                NavEvent::Select => {
+                    match highlighted_option {
+                        ExitOption::Ok => {
+                            app.set_exit_state(ExitState::NotExiting);
+                            return true; // Signal to exit the application
+                        }
+                        ExitOption::Cancel => {
+                            app.set_exit_state(ExitState::NotExiting);
                         }
                     }
                 }
             }
-            false
         }
     }
+    false
 }
