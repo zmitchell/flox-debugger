@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
 
-use crate::app::{AppEvent, Event, ExitState, NavEvent, Screen};
+use crate::app::{AppEvent, Event, ExitState, NavEvent, Screen, vars::VarsEvent};
 
 pub trait DisplayKeyBindings {
     /// Returns an iterator over (keys, description) pairs
@@ -145,23 +145,39 @@ impl KeyBindings {
         let GlobalKeyBindings {
             exit,
             next_tab,
-            prev_tab,
+            // prev_tab,
         } = self.global;
         let existing = keymap.insert(exit, Event::App(AppEvent::ExitRequested));
         debug_assert!(existing.is_none());
         let existing = keymap.insert(next_tab, Event::App(AppEvent::NextTab));
         debug_assert!(existing.is_none());
-        let existing = keymap.insert(prev_tab, Event::App(AppEvent::PrevTab));
-        debug_assert!(existing.is_none());
+        // let existing = keymap.insert(prev_tab, Event::App(AppEvent::PrevTab));
+        // debug_assert!(existing.is_none());
 
         // Match on the screen and apply screen-specific keybindings once
         // we have them
-        // match screen {
-        //     Screen::Home => {
-        //         let HomeKeyBindings {} = self.home;
-        //     }
-        //     _ => {}
-        // }
+        match screen {
+            Screen::Home => {
+                let HomeKeyBindings {} = self.home;
+            }
+            Screen::Vars => {
+                let VarsKeyBindings {
+                    next_var,
+                    previous_var,
+                    focus_var_list,
+                    focus_var_detail,
+                    raw_detail,
+                    split_detail,
+                } = self.vars;
+                keymap.insert(next_var, Event::Nav(NavEvent::Down));
+                keymap.insert(previous_var, Event::Nav(NavEvent::Up));
+                keymap.insert(focus_var_list, Event::Nav(NavEvent::Left));
+                keymap.insert(focus_var_detail, Event::Nav(NavEvent::Right));
+                keymap.insert(raw_detail, Event::Vars(VarsEvent::RawDetail));
+                keymap.insert(split_detail, Event::Vars(VarsEvent::SplitDetail));
+            }
+            _ => {}
+        }
         keymap
     }
 }
@@ -197,7 +213,7 @@ impl Default for GlobalKeyBindings {
         Self {
             exit,
             next_tab,
-            prev_tab,
+            // prev_tab,
         }
     }
 }
@@ -206,8 +222,8 @@ impl DisplayKeyBindings for GlobalKeyBindings {
     fn displayable(&self) -> Vec<(String, &'static str)> {
         vec![
             (self.exit.display_key_combo(), "Exit"),
-            (self.next_tab.display_key_combo(), "Next"),
-            (self.prev_tab.display_key_combo(), "Prev"),
+            (self.next_tab.display_key_combo(), "Next Tab"),
+            // (self.prev_tab.display_key_combo(), "Prev"),
         ]
     }
 }
@@ -230,12 +246,68 @@ impl DisplayKeyBindings for PromptKeyBindings {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct VarsKeyBindings {}
+#[derive(Debug, Clone)]
+pub struct VarsKeyBindings {
+    next_var: KeyEvent,
+    previous_var: KeyEvent,
+    focus_var_list: KeyEvent,
+    focus_var_detail: KeyEvent,
+    raw_detail: KeyEvent,
+    split_detail: KeyEvent,
+}
+
+impl Default for VarsKeyBindings {
+    fn default() -> Self {
+        let next_var = KeyEvent {
+            code: KeyCode::Down,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let previous_var = KeyEvent {
+            code: KeyCode::Up,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let focus_var_list = KeyEvent {
+            code: KeyCode::Left,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let focus_var_detail = KeyEvent {
+            code: KeyCode::Right,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let raw_detail = KeyEvent {
+            code: KeyCode::Char('r'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let split_detail = KeyEvent {
+            code: KeyCode::Char('s'),
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        Self {
+            next_var,
+            previous_var,
+            focus_var_list,
+            focus_var_detail,
+            raw_detail,
+            split_detail,
+        }
+    }
+}
 
 impl DisplayKeyBindings for VarsKeyBindings {
     fn displayable(&self) -> Vec<(String, &'static str)> {
-        vec![]
+        vec![("↑↓←→".to_string(), "Nav")]
     }
 }
 

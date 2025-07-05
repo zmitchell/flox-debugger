@@ -1,5 +1,7 @@
 pub mod key_bindings;
 pub mod theme;
+mod vars;
+
 use std::{collections::HashMap, io::Write};
 
 use anyhow::{Context, Error};
@@ -7,16 +9,21 @@ use ratatui::{
     Terminal,
     crossterm::event::{self, Event as TermEvent},
     prelude::*,
+    widgets::ListState,
 };
 
 use crate::{
-    app::{key_bindings::KeyBindings, theme::Theme},
+    app::{
+        key_bindings::KeyBindings,
+        theme::Theme,
+        vars::{VarsEvent, handle_vars_event},
+    },
     ui::draw_ui,
 };
 
 #[derive(Debug)]
 pub struct App {
-    env: HashMap<String, String>,
+    env: Env,
     cmds: Vec<Cmd>,
     screen: Screen,
     shell: Shell,
@@ -25,9 +32,90 @@ pub struct App {
     exit_state: ExitState,
 }
 
+#[derive(Debug, Clone)]
+pub struct Env {
+    vars: Vec<String>,
+    values: Vec<String>,
+    state: VarState,
+    var_list_state: ListState,
+}
+
+impl Env {
+    /// Initializes the `Env` state by reading the environment.
+    fn new() -> Self {
+        let (vars, values) = std::env::vars().collect::<(Vec<String>, Vec<String>)>();
+        let state = VarState {
+            detail_state: VarDetailState::Raw,
+        };
+        let list_state = Self::initial_list_state(&vars);
+        Self {
+            vars,
+            values,
+            state,
+            var_list_state: list_state,
+        }
+    }
+
+    /// Initializes the `Env` state with a provided set of environment variables.
+    fn with_env(env: &HashMap<String, String>) -> Self {
+        let (vars, values) = env
+            .iter()
+            .map(|(var, value)| (var.clone(), value.clone()))
+            .collect::<(Vec<String>, Vec<String>)>();
+        let state = VarState {
+            detail_state: VarDetailState::Raw,
+        };
+        let list_state = Self::initial_list_state(&vars);
+        Self {
+            vars,
+            values,
+            state,
+            var_list_state: list_state,
+        }
+    }
+
+    /// Returns an initialized list state that differs based on whether the
+    /// list of environment variables is empty or not (as a defensive measure).
+    fn initial_list_state(vars: &[String]) -> ListState {
+        if vars.is_empty() {
+            ListState::default()
+        } else {
+            let mut state = ListState::default();
+            state.select_first();
+            state
+        }
+    }
+
+    /// Returns a slice of the environment variable names.
+    pub fn vars(&self) -> &[String] {
+        self.vars.as_slice()
+    }
+
+    /// Returns a slice of the environment variable values.
+    pub fn var_values(&self) -> &[String] {
+        self.values.as_slice()
+    }
+
+    /// Returns the var list state for stateful rendering.
+    pub fn var_list_state(&mut self) -> &mut ListState {
+        &mut self.var_list_state
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct VarState {
+    detail_state: VarDetailState,
+}
+
+#[derive(Debug, Clone)]
+pub enum VarDetailState {
+    Raw,
+    AsList,
+}
+
 impl App {
     pub fn new() -> Self {
-        let env = std::env::vars().collect::<HashMap<String, String>>();
+        let env = Env::new();
         Self {
             env,
             cmds: Vec::new(),
@@ -41,8 +129,8 @@ impl App {
 
     /// Initialize the app with a specific set of environment variables.
     #[expect(dead_code)]
-    fn with_env(mut self, env: HashMap<String, String>) -> Self {
-        self.env = env;
+    fn with_env(mut self, env: &HashMap<String, String>) -> Self {
+        self.env = Env::with_env(&env);
         self
     }
 
@@ -121,6 +209,16 @@ impl App {
     /// Switches to the next tab
     pub fn next_tab(&mut self) {
         self.screen = self.screen.next_tab()
+    }
+
+    /// Returns the current environment.
+    pub fn env(&self) -> &Env {
+        &self.env
+    }
+
+    /// Returns a mutable reference to the current environment.
+    pub fn env_mut(&mut self) -> &mut Env {
+        &mut self.env
     }
 }
 
@@ -234,7 +332,8 @@ pub enum NavEvent {
 #[derive(Debug, Clone)]
 pub enum Event {
     App(AppEvent),
-    Nav(NavEvent), // Add this new variant
+    Nav(NavEvent),
+    Vars(VarsEvent),
 }
 
 #[derive(Debug, Clone)]
@@ -270,12 +369,13 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> Result<
 /// Modifies the application state in response to an event, returning a boolean
 /// indicating whether the application should exit.
 fn handle_event(app: &mut App, event: &Event) -> bool {
+    let should_exit = false;
     if app.is_displaying_exit_modal() {
         let should_exit = handle_exit_state(app, event);
         return should_exit;
     }
-    match event {
-        Event::App(app_event) => match app_event {
+    if let Event::App(app_event) = event {
+        match app_event {
             AppEvent::ExitRequested => {
                 app.set_exit_state(ExitState::PresentModal {
                     highlighted_option: ExitOption::Cancel,
@@ -284,10 +384,17 @@ fn handle_event(app: &mut App, event: &Event) -> bool {
             AppEvent::NextTab => {
                 app.next_tab();
             }
-        },
-        Event::Nav(_) => {}
+        }
+        return should_exit;
     }
-    false
+    match app.screen() {
+        Screen::Home => {}
+        Screen::Prompt => {}
+        Screen::Vars => handle_vars_event(app, event),
+        Screen::Trace => {}
+        Screen::Output => {}
+    }
+    should_exit
 }
 
 /// Handles events when the user is being presented the exit modal.
