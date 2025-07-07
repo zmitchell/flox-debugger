@@ -1,6 +1,6 @@
 pub mod key_bindings;
 pub mod theme;
-mod vars;
+pub mod vars;
 
 use std::{collections::HashMap, io::Write};
 
@@ -16,7 +16,7 @@ use crate::{
     app::{
         key_bindings::KeyBindings,
         theme::Theme,
-        vars::{VarsEvent, handle_vars_event},
+        vars::{Env, VarsEvent, handle_vars_event},
     },
     ui::draw_ui,
 };
@@ -30,87 +30,6 @@ pub struct App {
     theme: Theme,
     key_bindings: KeyBindings,
     exit_state: ExitState,
-}
-
-#[derive(Debug, Clone)]
-pub struct Env {
-    vars: Vec<String>,
-    values: Vec<String>,
-    state: VarState,
-    var_list_state: ListState,
-}
-
-impl Env {
-    /// Initializes the `Env` state by reading the environment.
-    fn new() -> Self {
-        let (vars, values) = std::env::vars().collect::<(Vec<String>, Vec<String>)>();
-        let state = VarState {
-            detail_state: VarDetailState::Raw,
-        };
-        let list_state = Self::initial_list_state(&vars);
-        Self {
-            vars,
-            values,
-            state,
-            var_list_state: list_state,
-        }
-    }
-
-    /// Initializes the `Env` state with a provided set of environment variables.
-    fn with_env(env: &HashMap<String, String>) -> Self {
-        let (vars, values) = env
-            .iter()
-            .map(|(var, value)| (var.clone(), value.clone()))
-            .collect::<(Vec<String>, Vec<String>)>();
-        let state = VarState {
-            detail_state: VarDetailState::Raw,
-        };
-        let list_state = Self::initial_list_state(&vars);
-        Self {
-            vars,
-            values,
-            state,
-            var_list_state: list_state,
-        }
-    }
-
-    /// Returns an initialized list state that differs based on whether the
-    /// list of environment variables is empty or not (as a defensive measure).
-    fn initial_list_state(vars: &[String]) -> ListState {
-        if vars.is_empty() {
-            ListState::default()
-        } else {
-            let mut state = ListState::default();
-            state.select_first();
-            state
-        }
-    }
-
-    /// Returns a slice of the environment variable names.
-    pub fn vars(&self) -> &[String] {
-        self.vars.as_slice()
-    }
-
-    /// Returns a slice of the environment variable values.
-    pub fn var_values(&self) -> &[String] {
-        self.values.as_slice()
-    }
-
-    /// Returns the var list state for stateful rendering.
-    pub fn var_list_state(&mut self) -> &mut ListState {
-        &mut self.var_list_state
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct VarState {
-    detail_state: VarDetailState,
-}
-
-#[derive(Debug, Clone)]
-pub enum VarDetailState {
-    Raw,
-    AsList,
 }
 
 impl App {
@@ -130,7 +49,7 @@ impl App {
     /// Initialize the app with a specific set of environment variables.
     #[expect(dead_code)]
     fn with_env(mut self, env: &HashMap<String, String>) -> Self {
-        self.env = Env::with_env(&env);
+        self.env = Env::with_env(env);
         self
     }
 
