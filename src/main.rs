@@ -1,6 +1,9 @@
 mod app;
+mod cli;
 mod ui;
+
 use anyhow::{Context, Error};
+use clap::Parser;
 use ratatui::{
     Terminal,
     crossterm::{
@@ -11,9 +14,13 @@ use ratatui::{
     prelude::*,
 };
 
-use crate::app::{App, run_app};
+use crate::{
+    app::{App, run_app},
+    cli::Cli,
+};
 
 fn main() -> Result<(), Error> {
+    let args = Cli::parse();
     // Setup the terminal in a TUI-friendly state, displaying the TUI via
     // stderr instead of stdout since we'll print shell commands on stdout
     // when the debugger exits.
@@ -25,7 +32,7 @@ fn main() -> Result<(), Error> {
     // Create and run the app.
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend).context("failed to get terminal")?;
-    let mut app = App::new();
+    let mut app = App::new(&args);
     let res = run_app(&mut app, &mut terminal);
 
     // Restore the terminal to its normal state.

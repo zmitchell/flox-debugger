@@ -1,15 +1,12 @@
-#!/usr/bin/env bash
-
-set -euo pipefail
+#!/usr/bin/env zsh
 
 source dbg.sh
-source other.bash
+source other.zsh
 
 myfunction() {
 	fdb_tracepoint myfunction
 	echo "running myfunction"
 }
-
 
 
 fdb_tracepoint start
@@ -18,3 +15,4 @@ myfunction
 otherfunc
 fdb_tracepoint end
 echo "Ending"
+

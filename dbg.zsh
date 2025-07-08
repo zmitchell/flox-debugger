@@ -1,12 +1,11 @@
-# TODO: this doesn't report the actual callsite of the get_stack_trace function
 function get_stack_trace() {
     local trace_parts=()
     local i
     
     # Start from index 1 (immediate caller) through all callers
-    for i in $(seq 0 $((${#BASH_SOURCE[@]} - 1))); do
-        local file_line="${BASH_SOURCE[$i]}:${BASH_LINENO[$((i - 1))]}"
-        local calling_func="${FUNCNAME[$((i + 1))]:-<script>}"
+    for i in {1..${#funcfiletrace[@]}}; do
+        local file_line="${funcfiletrace[$i]}"
+        local calling_func="${funcstack[$((i + 1))]:-<script>}"  # Get the caller's name
         trace_parts+=("${file_line} (${calling_func})")
     done
     
@@ -22,7 +21,7 @@ fdb_tracepoint() {
 		return
 	elif [ "$tracepoint" == "all" ] || [ "$tracepoint" == "next" ] || [ "$tracepoint" == "$name" ]; then
 		local output
-		output=$(target/debug/flox-debugger --shell bash)
+		output=$(target/debug/flox-debugger --shell zsh)
 		eval "$output"
 	fi
 }

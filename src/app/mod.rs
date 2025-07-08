@@ -2,14 +2,13 @@ pub mod key_bindings;
 pub mod theme;
 pub mod vars;
 
-use std::{collections::HashMap, io::Write};
+use std::{collections::HashMap, io::Write, str::FromStr};
 
-use anyhow::{Context, Error};
+use anyhow::{Context, Error, anyhow};
 use ratatui::{
     Terminal,
     crossterm::event::{self, Event as TermEvent},
     prelude::*,
-    widgets::ListState,
 };
 
 use crate::{
@@ -18,28 +17,31 @@ use crate::{
         theme::Theme,
         vars::{Env, VarsEvent, handle_vars_event},
     },
+    cli::Cli,
     ui::draw_ui,
 };
+
+pub const TRACEPOINT_VAR_NAME: &str = "FLOX_DBG_TRACEPOINT";
 
 #[derive(Debug)]
 pub struct App {
     env: Env,
-    cmds: Vec<Cmd>,
     screen: Screen,
     shell: Shell,
+    output: String,
     theme: Theme,
     key_bindings: KeyBindings,
     exit_state: ExitState,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(args: &Cli) -> Self {
         let env = Env::new();
         Self {
             env,
-            cmds: Vec::new(),
             screen: Screen::Home,
-            shell: Shell::Fish,
+            shell: args.shell,
+            output: Self::initial_output(args.shell),
             theme: Theme::default(),
             key_bindings: KeyBindings::default(),
             exit_state: ExitState::default(),
@@ -50,13 +52,6 @@ impl App {
     #[expect(dead_code)]
     fn with_env(mut self, env: &HashMap<String, String>) -> Self {
         self.env = Env::with_env(env);
-        self
-    }
-
-    /// Initialize the app with some commands pre-populated.
-    #[expect(dead_code)]
-    fn with_cmds(mut self, cmds: &[Cmd]) -> Self {
-        self.cmds = cmds.to_vec();
         self
     }
 
@@ -74,18 +69,41 @@ impl App {
         self
     }
 
+    /// Returns the initial output that will be sourced when the debugger exits.
+    fn initial_output(shell: Shell) -> String {
+        let tracepoint = std::env::var(TRACEPOINT_VAR_NAME).unwrap_or_default();
+        Self::initial_output_inner(shell, &tracepoint)
+    }
+
+    fn initial_output_inner(shell: Shell, tracepoint_var_value: &str) -> String {
+        match tracepoint_var_value {
+            "all" | "" => String::new(),
+            _other => match shell {
+                Shell::Bash => format!("unset {TRACEPOINT_VAR_NAME}\n"),
+                Shell::Zsh => format!("unset {TRACEPOINT_VAR_NAME}\n"),
+                Shell::Fish => format!("set -e {TRACEPOINT_VAR_NAME}\n"),
+            },
+        }
+    }
+
+    /// Returns a copy of the output commands.
+    pub fn output(&self) -> String {
+        self.output.clone()
+    }
+
     /// Prints the commands that the user's shell should source
     /// after the debugger exits.
     pub fn print_output(&self) -> Result<(), Error> {
-        Self::print_cmds_inner(&self.cmds, self.shell, &mut std::io::stdout())
+        Self::print_cmds_inner(&self.output, &mut std::io::stdout())
             .context("failed to write commands")?;
         Ok(())
     }
 
     /// Prints the commands that the user's shell should source to the specified
     /// buffer in the specified shell dialect.
-    fn print_cmds_inner(cmds: &[Cmd], shell: Shell, out: &mut impl Write) -> Result<(), Error> {
-        out.write_all("hello world".as_bytes())
+    fn print_cmds_inner(output: &str, stream: &mut impl Write) -> Result<(), Error> {
+        stream
+            .write_all(output.as_bytes())
             .context("failed to write commands to buffer")?;
         Ok(())
     }
@@ -221,6 +239,19 @@ pub enum Shell {
     Bash,
     Zsh,
     Fish,
+}
+
+impl FromStr for Shell {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bash" => Ok(Shell::Bash),
+            "zsh" => Ok(Shell::Zsh),
+            "fish" => Ok(Shell::Fish),
+            _ => Err(anyhow!("unrecognized shell: {s}")),
+        }
+    }
 }
 
 /// A generic shell command.
