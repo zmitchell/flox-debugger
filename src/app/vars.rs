@@ -48,11 +48,6 @@ impl Env {
         self.vars.as_slice()
     }
 
-    /// Returns a slice of the environment variable values.
-    pub fn var_values(&self) -> &[String] {
-        self.values.as_slice()
-    }
-
     /// Returns the var list state for stateful rendering.
     pub fn var_list_state(&mut self) -> &mut ListState {
         &mut self.var_list_state

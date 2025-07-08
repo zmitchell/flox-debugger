@@ -1,19 +1,14 @@
 use ratatui::{
     Frame,
-    layout::{Constraint, Flex, Layout, Rect},
+    layout::{Constraint, Layout, Rect},
     style::{Modifier, Style, Styled},
-    text::{Line, Span, Text},
+    text::Line,
     widgets::{Block, List, Paragraph, Wrap},
 };
 
-use crate::app::{
-    App,
-    theme::Theme,
-    vars::{Env, VarDetailState},
-};
+use crate::app::{App, vars::VarDetailState};
 
 pub fn render_vars_screen(app: &mut App, frame: &mut Frame, area: Rect) {
-    let theme = app.theme();
     let [var_list_area, detail_area] =
         Layout::horizontal([Constraint::Percentage(33), Constraint::Percentage(67)])
             .spacing(1)
@@ -65,7 +60,7 @@ fn render_var_detail(app: &mut App, frame: &mut Frame, area: Rect) {
         .selected_detail_item()
         .unwrap_or("<No item selected>".to_string());
 
-    let detail_block_title = var_detail_block_title(app.env().var_detail_state(), &app.theme());
+    let detail_block_title = var_detail_block_title(app.env().var_detail_state());
     let theme = app.theme();
     let block = Block::bordered().title(detail_block_title);
     let block = if app.env().var_list_focused() {
@@ -110,7 +105,7 @@ fn render_var_detail(app: &mut App, frame: &mut Frame, area: Rect) {
     }
 }
 
-fn var_detail_block_title(state: &VarDetailState, theme: &Theme) -> Line<'static> {
+fn var_detail_block_title(state: &VarDetailState) -> Line<'static> {
     match state {
         VarDetailState::Raw => Line::from(vec![
             " ".into(),

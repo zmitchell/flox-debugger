@@ -208,18 +208,6 @@ impl Screen {
             Output => Home,
         }
     }
-
-    /// Returns the previous tab
-    pub fn prev_tab(&self) -> Self {
-        use Screen::*;
-        match self {
-            Home => Output,
-            Prompt => Home,
-            Vars => Prompt,
-            Trace => Vars,
-            Output => Trace,
-        }
-    }
 }
 
 impl std::fmt::Display for Screen {
@@ -252,21 +240,6 @@ impl FromStr for Shell {
             _ => Err(anyhow!("unrecognized shell: {s}")),
         }
     }
-}
-
-/// A generic shell command.
-#[derive(Debug, Clone)]
-enum Cmd {
-    /// Set a variable with global scope. This is called `export`
-    /// in most shells.
-    SetGlobalVar {
-        /// The name of the variable to set.
-        name: String,
-        /// The value to give the variable (may contain expansions).
-        value: String,
-    },
-    /// Unset a variable.
-    Unset { name: String },
 }
 
 /// Navigation directions for UI elements
