@@ -59,10 +59,8 @@ fdb_tracepoint() {
 	if [ -z "$tracepoint" ]; then
 		return
 	elif [ "$tracepoint" == "all" ] || [ "$tracepoint" == "next" ] || [ "$tracepoint" == "$name" ]; then
-		local call_stack
-		call_stack="$(stack_trace)"
-		local output
-		output=$(target/debug/flox-debugger --shell bash --tracepoint "$name" --call-stack "$call_stack")
+		local call_stack="$(stack_trace)"
+		local output=$(target/debug/flox-debugger --shell bash --tracepoint "$name" --call-stack "$call_stack")
 		eval "$output"
 	fi
 }

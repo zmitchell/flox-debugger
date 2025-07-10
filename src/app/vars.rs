@@ -16,7 +16,13 @@ pub struct Env {
 impl Env {
     /// Initializes the `Env` state by reading the environment.
     pub fn new() -> Self {
-        let (vars, values) = std::env::vars().collect::<(Vec<String>, Vec<String>)>();
+        let (vars, values) = {
+            let mut vars_and_values = std::env::vars().collect::<Vec<_>>();
+            vars_and_values.sort_by_key(|(var, _value)| var.clone());
+            vars_and_values
+                .into_iter()
+                .collect::<(Vec<String>, Vec<String>)>()
+        };
         let list_state = initial_list_state(&vars);
         Self {
             vars,

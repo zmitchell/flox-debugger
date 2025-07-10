@@ -112,7 +112,7 @@ pub fn render_trace_screen(app: &mut App, frame: &mut Frame, area: Rect) {
         )
     } else {
         let offset = line_number - (visible_lines / 2);
-        let call_line = visible_lines / 2 + 1;
+        let call_line = visible_lines / 2 - 1;
         let lines = stack_frame.lines.as_ref().unwrap()[offset..(offset + visible_lines)].to_vec();
         (lines, call_line)
     };
