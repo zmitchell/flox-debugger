@@ -13,6 +13,18 @@ myfunction() {
 otherfunc() {
 	fdb_tracepoint otherfunc
 	echo "running otherfunc"
+	otherfunc2
+}
+
+otherfunc2() {
+	fdb_tracepoint otherfunc2
+	echo "running otherfunc2"
+	otherfunc3
+}
+
+otherfunc3() {
+	fdb_tracepoint otherfunc3
+	echo "running otherfunc3"
 }
 
 fdb_tracepoint start
