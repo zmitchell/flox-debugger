@@ -32,7 +32,7 @@ fn main() -> Result<(), Error> {
     // Create and run the app.
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend).context("failed to get terminal")?;
-    let mut app = App::new(&args);
+    let mut app = App::new(&args)?;
     let res = run_app(&mut app, &mut terminal);
 
     // Restore the terminal to its normal state.

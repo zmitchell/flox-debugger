@@ -1,5 +1,6 @@
 pub mod key_bindings;
 pub mod theme;
+pub mod trace;
 pub mod vars;
 
 use std::{collections::HashMap, io::Write, str::FromStr};
@@ -15,6 +16,7 @@ use crate::{
     app::{
         key_bindings::KeyBindings,
         theme::Theme,
+        trace::{TraceState, handle_trace_event, load_call_stack},
         vars::{Env, VarsEvent, handle_vars_event},
     },
     cli::Cli,
@@ -25,27 +27,36 @@ pub const TRACEPOINT_VAR_NAME: &str = "FLOX_DBG_TRACEPOINT";
 
 #[derive(Debug)]
 pub struct App {
-    env: Env,
     screen: Screen,
     shell: Shell,
-    output: String,
     theme: Theme,
     key_bindings: KeyBindings,
+    env: Env,
+    trace: TraceState,
+    output: String,
     exit_state: ExitState,
 }
 
 impl App {
-    pub fn new(args: &Cli) -> Self {
+    pub fn new(args: &Cli) -> Result<Self, Error> {
         let env = Env::new();
-        Self {
+        let call_stack = args
+            .call_stack
+            .as_ref()
+            .map(|cs| load_call_stack(cs, args.shell))
+            .transpose()
+            .context("failed to load call stack")?;
+        let app = Self {
             env,
+            trace: TraceState::new(args.tracepoint.clone(), call_stack),
             screen: Screen::Home,
             shell: args.shell,
             output: Self::initial_output(args.shell),
             theme: Theme::default(),
             key_bindings: KeyBindings::default(),
             exit_state: ExitState::default(),
-        }
+        };
+        Ok(app)
     }
 
     /// Initialize the app with a specific set of environment variables.
@@ -111,6 +122,16 @@ impl App {
     /// Returns the current screen.
     pub fn screen(&self) -> Screen {
         self.screen.clone()
+    }
+
+    /// Returns a reference to the trace state.
+    pub fn trace(&self) -> &TraceState {
+        &self.trace
+    }
+
+    /// Returns a mutable reference to the trace state.
+    pub fn trace_mut(&mut self) -> &mut TraceState {
+        &mut self.trace
     }
 
     /// Returns the configured theme.
@@ -314,7 +335,7 @@ fn handle_event(app: &mut App, event: &Event) -> bool {
         Screen::Home => {}
         Screen::Prompt => {}
         Screen::Vars => handle_vars_event(app, event),
-        Screen::Trace => {}
+        Screen::Trace => handle_trace_event(app, event),
         Screen::Output => {}
     }
     should_exit

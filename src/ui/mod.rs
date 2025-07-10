@@ -1,5 +1,6 @@
 mod home;
 mod output;
+mod trace;
 mod vars;
 
 use ratatui::{
@@ -12,7 +13,10 @@ use ratatui::{
 
 use crate::{
     app::{App, ExitOption, ExitState, Screen, key_bindings::DisplayKeyBindings},
-    ui::{home::render_home_screen, output::render_output_screen, vars::render_vars_screen},
+    ui::{
+        home::render_home_screen, output::render_output_screen, trace::render_trace_screen,
+        vars::render_vars_screen,
+    },
 };
 
 pub fn draw_ui(app: &mut App, frame: &mut Frame) {
@@ -34,7 +38,7 @@ pub fn draw_ui(app: &mut App, frame: &mut Frame) {
         Screen::Home => render_home_screen(app, frame, body_area),
         Screen::Prompt => render_dummy_screen("Prompt Screen", frame, body_area),
         Screen::Vars => render_vars_screen(app, frame, body_area),
-        Screen::Trace => render_dummy_screen("Trace Screen", frame, body_area),
+        Screen::Trace => render_trace_screen(app, frame, body_area),
         Screen::Output => render_output_screen(app, frame, body_area),
     }
     if matches!(app.exit_state(), ExitState::PresentModal { .. }) {

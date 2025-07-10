@@ -176,6 +176,14 @@ impl KeyBindings {
                 keymap.insert(raw_detail, Event::Vars(VarsEvent::RawDetail));
                 keymap.insert(split_detail, Event::Vars(VarsEvent::SplitDetail));
             }
+            Screen::Trace => {
+                let TraceKeyBindings {
+                    next_frame,
+                    previous_frame,
+                } = self.trace;
+                keymap.insert(next_frame, Event::Nav(NavEvent::Down));
+                keymap.insert(previous_frame, Event::Nav(NavEvent::Up));
+            }
             _ => {}
         }
         keymap
@@ -311,12 +319,36 @@ impl DisplayKeyBindings for VarsKeyBindings {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct TraceKeyBindings {}
+#[derive(Debug, Clone)]
+pub struct TraceKeyBindings {
+    pub next_frame: KeyEvent,
+    pub previous_frame: KeyEvent,
+}
 
 impl DisplayKeyBindings for TraceKeyBindings {
     fn displayable(&self) -> Vec<(String, &'static str)> {
-        vec![]
+        vec![("↑↓".to_string(), "Nav")]
+    }
+}
+
+impl Default for TraceKeyBindings {
+    fn default() -> Self {
+        let next_frame = KeyEvent {
+            code: KeyCode::Down,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        let previous_frame = KeyEvent {
+            code: KeyCode::Up,
+            modifiers: KeyModifiers::NONE,
+            kind: KeyEventKind::Press,
+            state: KeyEventState::NONE,
+        };
+        Self {
+            next_frame,
+            previous_frame,
+        }
     }
 }
 
